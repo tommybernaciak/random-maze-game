@@ -14,10 +14,12 @@ initialPlayerY = 16
 
 wallImage = pygame.image.load("wall5.png").convert()
 playerImage = pygame.image.load("player.png").convert()
+coinImage = pygame.image.load("coin1.png").convert()
 
 class Maze():
     def __init__(self):
         self.walls = []
+        self.gold = []
         self.startPointH = 0
         self.startPointW = 0
         self.width = screenWidth
@@ -75,12 +77,18 @@ class Maze():
                 s_cells +=1
             if (grid[rand_wall_h][rand_wall_w+1] == 'c'):
                 s_cells += 1
-            return s_cells 
+            return s_cells
+        
+        def select_cell_or_gold():
+            population = ['c', 'g']
+            weights = [0.95, 0.05]
+            chosen = random.choices(population, weights)
+            return chosen[0]
 
-        def check_and_mark_cell(grid, rand_wall):
+        def check_and_mark_cell_or_gold(grid, rand_wall):
             s_cells = surrounding_cells_count(grid, rand_wall)
             if s_cells < 2:
-                grid[rand_wall[0]][rand_wall[1]] = 'c'  
+                grid[rand_wall[0]][rand_wall[1]] = select_cell_or_gold()  
 
 
         def delete_wall(wallList, rand_wall):
@@ -112,8 +120,8 @@ class Maze():
                     if [rand_wall_h, rand_wall_w+1] not in wallList:
                         wallList.append([rand_wall_h, rand_wall_w+1])
         
-        def mark_cell_and_update(grid, wallList, rand_wall):
-            check_and_mark_cell(grid, rand_wall)
+        def update_checked_wall(grid, wallList, rand_wall):
+            check_and_mark_cell_or_gold(grid, rand_wall)
             update_grid_and_wallList(grid, wallList, rand_wall)
             delete_wall(wallList, rand_wall)
 
@@ -123,11 +131,13 @@ class Maze():
                     if grid[i][j] == 'u':
                         grid[i][j] = 'w'
 
-        def drawWalls(grid):
-            for i in range(0,self.height):
-                for j in range(0,self.width):
-                    if grid[i][j] == 'w':
-                        self.walls.append(Wall(j * unitSize, i * unitSize, wallImage))
+        def drawMaze(grid):
+            for h in range(0,self.height):
+                for w in range(0,self.width):
+                    if grid[h][w] == 'w':
+                        self.walls.append(Wall(w * unitSize, h * unitSize, wallImage))
+                    if grid[h][w] == 'g':
+                        self.gold.append(Gold(w * unitSize, h * unitSize, coinImage))
         ##########
 
         # wallList stores coordinates of walls to be checked
@@ -148,39 +158,41 @@ class Maze():
             rand_wall_w = rand_wall[1]
             if rand_wall_w != 0:
                 if grid[rand_wall_h][rand_wall_w-1] == 'u' and grid[rand_wall_h][rand_wall_w+1] == 'c':
-                    mark_cell_and_update(grid, wallList, rand_wall)
+                    update_checked_wall(grid, wallList, rand_wall)
                     continue
                
             if rand_wall_h != 0:  
                 if grid[rand_wall_h-1][rand_wall_w] == 'u' and grid[rand_wall_h+1][rand_wall_w] == 'c':
-                    mark_cell_and_update(grid, wallList, rand_wall)
+                    update_checked_wall(grid, wallList, rand_wall)
                     continue
               
             if rand_wall_h != self.height-1:
                 if grid[rand_wall_h+1][rand_wall_w] == 'u' and grid[rand_wall_h-1][rand_wall_w] == 'c':
-                    mark_cell_and_update(grid, wallList, rand_wall)
+                    update_checked_wall(grid, wallList, rand_wall)
                     continue
                
             if rand_wall_w != self.width-1:
                 if grid[rand_wall_h][rand_wall_w+1] == 'u' and grid[rand_wall_h][rand_wall_w-1] == 'c':
-                    mark_cell_and_update(grid, wallList, rand_wall)
+                    update_checked_wall(grid, wallList, rand_wall)
                     continue
                 
             delete_wall(wallList, rand_wall)
         set_borders(grid)
         mark_unvisited_cells_as_wall(grid)
-        ##########
-        # print - debug
-        # print(self.startPointW, self.startPointH)
-        # for i in range(0, len(grid)):
-        #     for j in range(0, len(grid[0])):
-        #         print(grid[i][j], end="")
-        #     print('\n')
-        ##########
-        drawWalls(grid)
+        drawMaze(grid)
     
 
 class Wall(pygame.sprite.Sprite):
+    def __init__(self, x, y, image):
+        self.x = x
+        self.y = y
+        self.image = image
+        self.area = pygame.Rect(self.x, self.y, unitSize, unitSize)
+
+    def draw(self):
+        screen.blit(self.image, self.area)
+
+class Gold(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
         self.x = x
         self.y = y
@@ -243,24 +255,29 @@ while True:
            playerMove = False
 
     screen.fill(bg)
-    collision = []
-    playerCollisionLeft = player.area.copy().move(-1, 0)
-    playerCollisionRight = player.area.copy().move(1, 0)
-    playerCollisionUp = player.area.copy().move(0, -1)
-    playerCollisionDown = player.area.copy().move(0, 1)
+    for gold in maze.gold:
+        gold.draw()
+        if player.area.colliderect(gold.area):
+            maze.gold.remove(gold)
+
+    player_wall_collisions = []
+    player_wall_collision_left = player.area.copy().move(-1, 0)
+    player_wall_collision_right = player.area.copy().move(1, 0)
+    player_wall_collision_up = player.area.copy().move(0, -1)
+    player_wall_collision_down = player.area.copy().move(0, 1)
     for wall in maze.walls:
         wall.draw()
-        if playerCollisionLeft.colliderect(wall.area):
-            collision.append('left')
-        if playerCollisionRight.colliderect(wall.area):
-            collision.append('right')
-        if playerCollisionUp.colliderect(wall.area):
-            collision.append('up')
-        if playerCollisionDown.colliderect(wall.area):
-            collision.append('down')
+        if player_wall_collision_left.colliderect(wall.area):
+            player_wall_collisions.append('left')
+        if player_wall_collision_right.colliderect(wall.area):
+            player_wall_collisions.append('right')
+        if player_wall_collision_up.colliderect(wall.area):
+            player_wall_collisions.append('up')
+        if player_wall_collision_down.colliderect(wall.area):
+            player_wall_collisions.append('down')
 
 
-    if not playerMove in collision:  
+    if not playerMove in player_wall_collisions:  
         player.makeMove(playerMove)
 
     player.draw()
