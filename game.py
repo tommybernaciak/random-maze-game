@@ -1,20 +1,18 @@
 import pygame
 import random
+from config import UNIT_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT
+from src.wall import Wall
+from src.gold import Gold
 
 pygame.init()
 bg = pygame.Color("#8f9943")
-unitSize = 16
 speed = 4
-screenWidth = 60
-screenHeight = 40
-screen = pygame.display.set_mode((screenWidth * unitSize, screenHeight * unitSize))
+screen = pygame.display.set_mode((SCREEN_WIDTH * UNIT_SIZE, SCREEN_HEIGHT * UNIT_SIZE))
 screen.fill(bg)
-initialPlayerX = 16
-initialPlayerY = 16
 
-wallImage = pygame.image.load("wall5.png").convert()
-playerImage = pygame.image.load("player.png").convert()
-coinImage = pygame.image.load("coin1.png").convert()
+wallImage = pygame.image.load("assets/wall5.png").convert()
+playerImage = pygame.image.load("assets/player.png").convert()
+coinImage = pygame.image.load("assets/coin1.png").convert()
 
 class Maze():
     def __init__(self):
@@ -22,8 +20,8 @@ class Maze():
         self.gold = []
         self.startPointH = 0
         self.startPointW = 0
-        self.width = screenWidth
-        self.height = screenHeight
+        self.width = SCREEN_WIDTH
+        self.height = SCREEN_HEIGHT
         self.generate()
 
     # Randomized Prim’s Algorithm
@@ -135,9 +133,9 @@ class Maze():
             for h in range(0,self.height):
                 for w in range(0,self.width):
                     if grid[h][w] == 'w':
-                        self.walls.append(Wall(w * unitSize, h * unitSize, wallImage))
+                        self.walls.append(Wall(w * UNIT_SIZE, h * UNIT_SIZE, wallImage, screen))
                     if grid[h][w] == 'g':
-                        self.gold.append(Gold(w * unitSize, h * unitSize, coinImage))
+                        self.gold.append(Gold(w * UNIT_SIZE, h * UNIT_SIZE, coinImage, screen))
         ##########
 
         # wallList stores coordinates of walls to be checked
@@ -180,40 +178,19 @@ class Maze():
         set_borders(grid)
         mark_unvisited_cells_as_wall(grid)
         drawMaze(grid)
-    
-
-class Wall(pygame.sprite.Sprite):
-    def __init__(self, x, y, image):
-        self.x = x
-        self.y = y
-        self.image = image
-        self.area = pygame.Rect(self.x, self.y, unitSize, unitSize)
-
-    def draw(self):
-        screen.blit(self.image, self.area)
-
-class Gold(pygame.sprite.Sprite):
-    def __init__(self, x, y, image):
-        self.x = x
-        self.y = y
-        self.image = image
-        self.area = pygame.Rect(self.x, self.y, unitSize, unitSize)
-
-    def draw(self):
-        screen.blit(self.image, self.area)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
         self.x = x
         self.y = y
         self.image = image
-        self.area = pygame.Rect(self.x, self.y, unitSize, unitSize)
+        self.area = pygame.Rect(self.x, self.y, UNIT_SIZE, UNIT_SIZE)
     def draw(self):
         screen.blit(self.image, (self.x, self.y))
     def move(self, x, y):
         self.x += x
         self.y += y
-        self.area = pygame.Rect(self.x, self.y, unitSize, unitSize)
+        self.area = pygame.Rect(self.x, self.y, UNIT_SIZE, UNIT_SIZE)
     def moveLeft(self):
         self.move(-speed, 0)
     def moveRight(self):
@@ -233,7 +210,7 @@ class Player(pygame.sprite.Sprite):
             self.moveDown()
 
 maze = Maze()
-player = Player(maze.startPointW * unitSize, maze.startPointH * unitSize, playerImage)
+player = Player(maze.startPointW * UNIT_SIZE, maze.startPointH * UNIT_SIZE, playerImage)
 playerMove = False
 
 while True:
