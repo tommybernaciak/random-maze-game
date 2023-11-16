@@ -1,12 +1,12 @@
 import pygame
 import random
-from config import UNIT_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT
+from config import UNIT_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, BACKGROUND_COLOR
 from src.wall import Wall
 from src.gold import Gold
+from src.player import Player
 
 pygame.init()
-bg = pygame.Color("#8f9943")
-speed = 4
+bg = pygame.Color(BACKGROUND_COLOR)
 screen = pygame.display.set_mode((SCREEN_WIDTH * UNIT_SIZE, SCREEN_HEIGHT * UNIT_SIZE))
 screen.fill(bg)
 
@@ -179,38 +179,9 @@ class Maze():
         mark_unvisited_cells_as_wall(grid)
         drawMaze(grid)
 
-class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, image):
-        self.x = x
-        self.y = y
-        self.image = image
-        self.area = pygame.Rect(self.x, self.y, UNIT_SIZE, UNIT_SIZE)
-    def draw(self):
-        screen.blit(self.image, (self.x, self.y))
-    def move(self, x, y):
-        self.x += x
-        self.y += y
-        self.area = pygame.Rect(self.x, self.y, UNIT_SIZE, UNIT_SIZE)
-    def moveLeft(self):
-        self.move(-speed, 0)
-    def moveRight(self):
-        self.move(speed, 0)
-    def moveUp(self):
-        self.move(0, -speed)
-    def moveDown(self):
-        self.move(0, speed)
-    def makeMove(self, dir):
-        if dir == 'left':
-            self.moveLeft()
-        if dir == 'right':
-            self.moveRight()
-        if dir == 'up':
-            self.moveUp()
-        if dir == 'down':
-            self.moveDown()
 
 maze = Maze()
-player = Player(maze.startPointW * UNIT_SIZE, maze.startPointH * UNIT_SIZE, playerImage)
+player = Player(maze.startPointW * UNIT_SIZE, maze.startPointH * UNIT_SIZE, playerImage, screen)
 playerMove = False
 
 while True:
